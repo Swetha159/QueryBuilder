@@ -143,12 +143,29 @@ public class QueryBuilder {
 	}
 
 	
-	public QueryBuilder join(String type, String table, String condition) {
-	    this.joins.add(type.toUpperCase() + " JOIN " + table + " ON " + condition);
+//	public QueryBuilder join(String type, String table, String condition) {
+//	    this.joins.add(type.toUpperCase() + " JOIN " + table + " ON " + condition);
+//	    return this;
+//	}
+
+	public QueryBuilder join(String type, String table,String alias ,  OnClause... onClause) {
+	    String on= Arrays.stream(onClause)
+	                            .map(OnClause::toString)
+	                            .collect(Collectors.joining(" "));
+	    this.joins.add(type.toUpperCase() + " JOIN " + table + " AS "+ alias + " " + on);
 	    return this;
 	}
-
-
+	
+	public QueryBuilder join(String type, String table, OnClause... onClause) {
+	    String on = Arrays.stream(onClause)
+	                            .map(OnClause::toString)
+	                            .collect(Collectors.joining(" "));
+	    this.joins.add(type.toUpperCase() + " JOIN " + table +" " + on);
+	    return this;
+	}
+	
+	
+	
 	public QueryBuilder orderBy(String column, boolean ascending) {
 		this.orderBy.add(column + (ascending ? " ASC" : " DESC"));
 		return this;

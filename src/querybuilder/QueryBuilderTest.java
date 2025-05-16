@@ -28,7 +28,7 @@ public class QueryBuilderTest {
 //            statement.executeUpdate(createQuery);
 
          
-            String insertQuery = new QueryBuilder()
+            Query insertQuery = new QueryBuilder()
                     .insert("SwethaSS")
                     .values(111, 12, 13, "Charlie")
                     .values(121, 13, 14, "Denny")
@@ -36,7 +36,7 @@ public class QueryBuilderTest {
                     .values(141, 14, 16, "Charlie")
                     .build();
             System.out.println(insertQuery);
-            statement.executeUpdate(insertQuery);
+            statement.executeLargeUpdate(insertQuery);
 
     
             String groupQuery = new QueryBuilder()

@@ -2,8 +2,8 @@
 <classpath>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.8"/>
 	<classpathentry kind="src" path="src"/>
-	<classpathentry kind="lib" path="/home/swetha-tt0686/Desktop/TaskException.jar"/>
-	<classpathentry kind="lib" path="/home/swetha-tt0686/Desktop/Property.jar"/>
-	<classpathentry kind="lib" path="/home/swetha-tt0686/Downloads/mysql-connector-java-8.0.25.jar"/>
+	<classpathentry kind="lib" path="/home/swetha-23428/Desktop/TaskException.jar"/>
+	<classpathentry kind="lib" path="/home/swetha-23428/Documents/Property.jar"/>
+	<classpathentry kind="lib" path="/home/swetha-23428/Downloads/mysql-connector-java-8.0.25.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
