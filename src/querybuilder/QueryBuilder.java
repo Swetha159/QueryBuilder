@@ -39,9 +39,9 @@ public class QueryBuilder {
 		this.val = new ArrayList<>();
 	}
 
-	public QueryBuilder create(String table) {
+	public QueryBuilder create(Column column) {
 		this.queryType = "CREATE";
-		this.table = table;
+		this.table = column.getTableName();
 		return this;
 	}
 
@@ -52,14 +52,18 @@ public class QueryBuilder {
 		return this;
 	}
 
-	public QueryBuilder select(String... columns) {
+	public QueryBuilder select(Object... columns) {
 		this.queryType = "SELECT";
 		if (columns == null) {
 			this.columns.add("*");
 			return this;
 		}
-		for (String column : columns) {
-			this.columns.add(column);
+		for (Object col: columns) {
+			if (col instanceof Column) {
+				this.columns.add(((Column) col).getQualifiedName());
+	        } else if (col instanceof String) {
+	        	this.columns.add((String) col);
+	        } 
 		}
 		return this;
 	}
@@ -83,23 +87,20 @@ public class QueryBuilder {
 //	    this.val.add(formatted);
 	    return this;
 	}
-
-	
-
-	public QueryBuilder insert(String table) {
+	public QueryBuilder insert(Column column) {
 		this.queryType = "INSERT";
-		this.table = table;
+		this.table = column.getTableName();
 	
 		return this;
 	}
 
-	public QueryBuilder update(String table) {
+	public QueryBuilder update(Column column) {
 		this.queryType = "UPDATE";
-		this.table = table;
+		this.table = column.getTableName();
 		return this;
 	}
 
-	public QueryBuilder set(String column, Object value) {
+	public QueryBuilder set(Column column, Object value) {
 //	    if (value == null) {
 //	        this.setValues.add(column + " = NULL");
 //	    } else if (value instanceof String) {
@@ -107,40 +108,64 @@ public class QueryBuilder {
 //	    } else {
 //	        this.setValues.add(column + " = " + value.toString());
 //	    }
-	    this.setValues.add(column + " = " + "?");
+	    this.setValues.add(column.getColumnName() + " = " + "?");
         this.val.add(value);
 	    return this;
 	}
 
 
-	public QueryBuilder deleteFrom(String table) {
+	public QueryBuilder deleteFrom(Column column) {
 		this.queryType = "DELETE";
-		this.table = table;
+		this.table = column.getTableName();
 		return this;
 	}
 
-	public QueryBuilder from(String table) {
-		this.table = table;
+	public QueryBuilder from(Column column) {
+		this.table = column.getTableName();
 		return this;
 	}
 
-	public QueryBuilder where(String column, String operator, Object value) {
+	public QueryBuilder where(Column column, String operator, Object value) {
 		this.conditions.add(new Condition(column, operator, '?', null));
 		val.add(value);
 		return this;
 	}
 
-	public QueryBuilder and(String column, String operator, Object value) {
+	public QueryBuilder and(Column column, String operator, Object value) {
 		this.conditions.add(new Condition(column, operator, '?', "AND"));
 		val.add(value);
 		return this;
 	}
 
-	public QueryBuilder or(String column, String operator, Object value) {
+	public QueryBuilder or(Column column, String operator, Object value) {
 		this.conditions.add(new Condition(column, operator, '?', "OR"));
 		val.add(value);
 		return this;
 	}
+	
+	public QueryBuilder whereIn(Column column, List<Object> values) throws TaskException {
+	    return addInCondition(column, "IN", values, null);
+	}
+
+	public QueryBuilder andIn(Column column, List<Object> values) throws TaskException {
+	    return addInCondition(column, "IN", values, "AND");
+	}
+
+	public QueryBuilder orIn(Column column, List<Object> values) throws TaskException {
+	    return addInCondition(column, "IN", values, "OR");
+	}
+
+	private QueryBuilder addInCondition(Column column, String operator, List<Object> values, String connector) throws TaskException {
+	    if (values == null || values.isEmpty()) {
+	        throw new TaskException("IN clause cannot have empty values");
+	    }
+
+	    String placeholders = values.stream().map(v -> "?").collect(Collectors.joining(", "));
+	    this.conditions.add(new Condition(column, operator, placeholders, connector));
+	    this.val.addAll(values);
+	    return this;
+	}
+
 
 	
 //	public QueryBuilder join(String type, String table, String condition) {
@@ -148,31 +173,31 @@ public class QueryBuilder {
 //	    return this;
 //	}
 
-	public QueryBuilder join(String type, String table,String alias ,  OnClause... onClause) {
+	public QueryBuilder join(String type, Column table,String alias ,  OnClause... onClause) {
 	    String on= Arrays.stream(onClause)
 	                            .map(OnClause::toString)
 	                            .collect(Collectors.joining(" "));
-	    this.joins.add(type.toUpperCase() + " JOIN " + table + " AS "+ alias + " " + on);
+	    this.joins.add(type.toUpperCase() + " JOIN " + table.getTableName() + " AS "+ alias + " " + on);
 	    return this;
 	}
 	
-	public QueryBuilder join(String type, String table, OnClause... onClause) {
+	public QueryBuilder join(String type, Column table, OnClause... onClause) {
 	    String on = Arrays.stream(onClause)
 	                            .map(OnClause::toString)
 	                            .collect(Collectors.joining(" "));
-	    this.joins.add(type.toUpperCase() + " JOIN " + table +" " + on);
+	    this.joins.add(type.toUpperCase() + " JOIN " + table.getTableName() +" " + on);
 	    return this;
 	}
 	
 	
 	
-	public QueryBuilder orderBy(String column, boolean ascending) {
-		this.orderBy.add(column + (ascending ? " ASC" : " DESC"));
+	public QueryBuilder orderBy(Column column, boolean ascending) {
+		this.orderBy.add(column.getColumnName() + (ascending ? " ASC" : " DESC"));
 		return this;
 	}
 
-	public QueryBuilder groupBy(String column) {
-		this.groupBy.add(column);
+	public QueryBuilder groupBy(Column column) {
+		this.groupBy.add(column.getColumnName());
 		return this;
 	}
 	
@@ -190,28 +215,28 @@ public class QueryBuilder {
 		this.offset = offset;
 		return this;
 	}
-	public QueryBuilder count(String column, String alias) {
-	    columns.add("COUNT(" + column + ") AS " + alias);
+	public QueryBuilder count(Column column, String alias) {
+	    columns.add("COUNT(" + column.getColumnName() + ") AS " + alias);
 	    return this;
 	}
 
-	public QueryBuilder sum(String column, String alias) {
-	    columns.add("SUM(" + column + ") AS " + alias);
+	public QueryBuilder sum(Column column, String alias) {
+	    columns.add("SUM(" + column.getColumnName() + ") AS " + alias);
 	    return this;
 	}
 
-	public QueryBuilder avg(String column, String alias) {
-	    columns.add("AVG(" + column + ") AS " + alias);
+	public QueryBuilder avg(Column column, String alias) {
+	    columns.add("AVG(" + column.getColumnName() + ") AS " + alias);
 	    return this;
 	}
 
-	public QueryBuilder min(String column, String alias) {
-	    columns.add("MIN(" + column + ") AS " + alias);
+	public QueryBuilder min(Column column, String alias) {
+	    columns.add("MIN(" + column.getColumnName() + ") AS " + alias);
 	    return this;
 	}
 
-	public QueryBuilder max(String column, String alias) {
-	    columns.add("MAX(" + column + ") AS " + alias);
+	public QueryBuilder max(Column column, String alias) {
+	    columns.add("MAX(" + column.getColumnName() + ") AS " + alias);
 	    return this;
 	}
 
@@ -221,7 +246,7 @@ public class QueryBuilder {
 		return this;
 	}
 	
-	public QueryBuilder setConditional(String column, Map<String, String> conditionThenMap, String elseValue) {
+	public QueryBuilder setConditional(Column column, Map<String, String> conditionThenMap, String elseValue) {
 	    StringBuilder caseExpression = new StringBuilder("CASE ");
 	    for (Map.Entry<String, String> entry : conditionThenMap.entrySet()) {
 	        caseExpression.append("WHEN ").append(entry.getKey())
@@ -229,7 +254,7 @@ public class QueryBuilder {
 	    }
 	    caseExpression.append("ELSE ").append(elseValue).append(" END");
 
-	    setValues.add(column + " = " + caseExpression.toString());
+	    setValues.add(column.getColumnName() + " = " + caseExpression.toString());
 	    return this;
 	}
 

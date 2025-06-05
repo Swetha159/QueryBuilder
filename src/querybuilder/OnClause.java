@@ -1,40 +1,29 @@
 package querybuilder;
 
 public class OnClause {
-	
-	private String leftColumn ; 
-	private String rightColumn ; 
-	private String operator ; 
-	private String connector ;
-	
-	public OnClause(String leftColumn , String operator ,String rightColumn , String connector )
-	{
-		this.leftColumn = leftColumn ; 
-		this.rightColumn = rightColumn ; 
-		this.operator = operator ; 
-		this.connector = connector ;
-	}
-	
-	public OnClause(String leftColumn , String operator ,String rightColumn )
-	{
-		this.leftColumn = leftColumn ; 
-		this.rightColumn = rightColumn ; 
-		this.operator = operator ; 
-		this.connector =null ;
-	}
-	
-	@Override
-	public String toString()
-	{
-		if(connector==null)
-		{
-		return " "+"ON"+" "+leftColumn +" "+operator+" "+rightColumn  ;
-		}
-		else
-		{
-			return " "+"connector"+" "+leftColumn +" "+operator+" "+rightColumn  ;
-		}
-	}
-	
 
+	private final String leftColumn;
+	private final String rightColumn;
+	private final String operator;
+	private final String connector;
+
+	public OnClause(Column leftColumn, String operator, Column rightColumn, String connector) {
+		this.leftColumn = leftColumn.getQualifiedName();  
+		this.rightColumn = rightColumn.getQualifiedName();
+		this.operator = operator;
+		this.connector = connector;
+	}
+
+	public OnClause(Column leftColumn, String operator, Column rightColumn) {
+		this(leftColumn, operator, rightColumn, null);
+	}
+
+	@Override
+	public String toString() {
+		if (connector == null) {
+			return "ON " + leftColumn + " " + operator + " " + rightColumn;
+		} else {
+			return connector.toUpperCase() + " " + leftColumn + " " + operator + " " + rightColumn;
+		}
+	}
 }
