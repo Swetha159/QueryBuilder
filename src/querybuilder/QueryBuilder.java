@@ -45,13 +45,20 @@ public class QueryBuilder {
 		return this;
 	}
 
+	public QueryBuilder column(Column... columns) {
+		for (Column column : columns) {
+			this.columns.add(column.getQualifiedName());
+		}
+		return this;
+	}
+
 	public QueryBuilder columnDescription(String... columns) {
 		for (String column : columns) {
 			this.columns.add(column);
 		}
 		return this;
 	}
-
+	
 	public QueryBuilder select(Object... columns) {
 		this.queryType = "SELECT";
 		if (columns == null) {
@@ -91,6 +98,13 @@ public class QueryBuilder {
 		this.queryType = "INSERT";
 		this.table = column.getTableName();
 	
+		return this;
+	}
+	
+	public QueryBuilder replaceInto(Column column) {
+		this.queryType = "REPLACE";
+		this.table = column.getTableName();
+		
 		return this;
 	}
 
@@ -191,13 +205,18 @@ public class QueryBuilder {
 	
 	
 	
-	public QueryBuilder orderBy(Column column, boolean ascending) {
-		this.orderBy.add(column.getColumnName() + (ascending ? " ASC" : " DESC"));
+	public QueryBuilder orderBy(Object column, boolean ascending) {
+		if (column instanceof Column) {
+			this.orderBy.add(((Column) column).getQualifiedName() + (ascending ? " ASC" : " DESC"));
+        } else if (column instanceof String) {
+        	this.orderBy.add((String)column+ (ascending ? " ASC" : " DESC"));
+        } 
+		
 		return this;
 	}
 
 	public QueryBuilder groupBy(Column column) {
-		this.groupBy.add(column.getColumnName());
+		this.groupBy.add(column.getQualifiedName());
 		return this;
 	}
 	
@@ -282,6 +301,19 @@ public class QueryBuilder {
 		    String placeholders = String.join(", ", Collections.nCopies(paramCount, "?"));
 		   sb.append("(" + placeholders + ")");
 		    break;
+		
+		case "REPLACE":
+		    sb.append("REPLACE INTO ")
+		      .append(table);
+		      if (!columns.isEmpty()) {
+                  sb.append(" (").append(String.join(", ", columns)).append(") ");
+              }
+		      sb.append(" VALUES ");
+		    paramCount = val.size();
+		     placeholders = String.join(", ", Collections.nCopies(paramCount, "?"));
+		   sb.append("(" + placeholders + ")");
+		    break;
+		    
 		case "UPDATE":
 			sb.append("UPDATE ").append(table).append(" SET ").append(String.join(", ", setValues));
 		
